@@ -1,5 +1,6 @@
--- Cria a tabela de usuários
-CREATE TABLE IF NOT EXISTS users (
+DROP TABLE IF EXISTS play_history, favorite_audios, playlist_audios, playlists, audios, users CASCADE;
+
+CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
@@ -7,10 +8,9 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- Cria a tabela de áudios
-CREATE TABLE IF NOT EXISTS audios (
+CREATE TABLE audios (
     id SERIAL PRIMARY KEY,
-    filename VARCHAR(255) NOT NULL UNIQUE,
+    filename TEXT NOT NULL, -- Alterado para TEXT
     music_name VARCHAR(255) NOT NULL,
     author VARCHAR(255) NOT NULL,
     genre VARCHAR(100),
@@ -18,9 +18,10 @@ CREATE TABLE IF NOT EXISTS audios (
     year INT,
     description TEXT,
     lyrics TEXT,
-    album_art_filename VARCHAR(255),
+    album_art_filename TEXT, -- Alterado para TEXT
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
 
 -- Cria a tabela de playlists
 CREATE TABLE IF NOT EXISTS playlists (

@@ -1,45 +1,33 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 
-const UPLOAD_DIR = 'uploads';
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR);
-}
+// NÃO PRECISAMOS MAIS CHAMAR cloudinary.config() AQUI.
+// A biblioteca irá ler a variável CLOUDINARY_URL do seu .env automaticamente.
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOAD_DIR);
+// Configura o armazenamento para o Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: (req, file) => {
+    // Para áudios, o resource_type é 'video'. Para imagens, é 'image'.
+    const isAudio = file.mimetype.startsWith('audio/');
+    return {
+      folder: 'music_app', // Nome da pasta no Cloudinary onde os arquivos serão salvos
+      resource_type: isAudio ? 'video' : 'auto', // 'auto' detecta o tipo de recurso
+    };
   },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['audio/mpeg', 'audio/mp3', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Tipo de arquivo não suportado.'), false);
-  }
-};
-
-const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
-  limits: { fileSize: 1024 * 1024 * 20 }
-}).fields([
-  { name: 'audiofile', maxCount: 1 },
-  { name: 'imagefile', maxCount: 1 }
+const upload = multer({ storage: storage }).fields([
+    { name: 'audiofile', maxCount: 1 },
+    { name: 'imagefile', maxCount: 1 }
 ]);
 
 module.exports = (req, res, next) => {
-  upload(req, res, function (err) {
-    if (err) {
-      return res.status(400).json({ message: `Erro no upload: ${err.message}` });
-    }
-    next();
-  });
+    upload(req, res, function (err) {
+        if (err) {
+            return res.status(400).json({ message: `Erro no upload do Cloudinary: ${err.message}` });
+        }
+        next();
+    });
 };

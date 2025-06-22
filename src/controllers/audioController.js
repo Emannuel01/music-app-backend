@@ -7,8 +7,6 @@ const path = require('path');
 
 async function uploadAudio(req, res) {
     try {
-        // 1. Acessa os arquivos enviados pelo multer.
-        // req.files é um objeto com as chaves 'audiofile' e 'imagefile'.
         const audiofile = req.files.audiofile ? req.files.audiofile[0] : null;
         const imagefile = req.files.imagefile ? req.files.imagefile[0] : null;
 
@@ -19,17 +17,13 @@ async function uploadAudio(req, res) {
         const { music_name, author, year, genre, lyrics, description, group_artists } = req.body;
         
         if (!music_name || !author) {
-            // Limpa os arquivos órfãos se os dados essenciais não foram enviados
-            if (audiofile) fs.unlinkSync(audiofile.path);
-            if (imagefile) fs.unlinkSync(imagefile.path);
             return res.status(400).json({ message: 'Nome da música e autor são obrigatórios.' });
         }
 
-        // 2. Monta o objeto de dados para salvar no banco.
-        // A linha chave é a que verifica se 'imagefile' existe.
+        // CORREÇÃO: Garantimos que estamos pegando a propriedade 'path', que é a URL completa do Cloudinary.
         const audioData = {
-            filename: audiofile.filename,
-            album_art_filename: imagefile ? imagefile.filename : null, // Se imagefile existir, pega seu nome; senão, salva NULL.
+            filename: audiofile.path,
+            album_art_filename: imagefile ? imagefile.path : null,
             music_name,
             author,
             lyrics,
@@ -39,7 +33,6 @@ async function uploadAudio(req, res) {
             genre,
         };
 
-        // 3. Envia os dados completos para o model, que irá inserir no banco.
         const newAudio = await audioModel.createAudio(audioData);
         res.status(201).json({ message: 'Upload bem-sucedido!', data: { id: newAudio.id } });
 
