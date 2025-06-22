@@ -22,9 +22,25 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Middlewares
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://https://music-app-frontend-three.vercel.app/' 
+]
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Permite requisições sem 'origin' (como apps mobile ou Postman) ou se a origem estiver na lista
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+};
 app.use(cors()); // 2. USE O MIDDLEWARE CORS AQUI
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 
 // Este caminho agora funciona corretamente a partir da raiz
 app.use('/files', express.static('uploads'));
