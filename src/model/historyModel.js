@@ -1,11 +1,13 @@
 const db = require('../database/db'); 
 
 async function addPlayToHistory({ userId, audioId }) {
+  // Corrigido para a sintaxe do PostgreSQL
   const sql = `INSERT INTO play_history (user_id, audio_id) VALUES ($1, $2)`;
   return db.query(sql, [userId, audioId]);
 }
 
 async function getRecentPlaysByUserId(userId, limit = 50) {
+  // Corrigido para a sintaxe do PostgreSQL
   const sql = `
     SELECT a.* FROM audios a
     JOIN (
@@ -18,4 +20,7 @@ async function getRecentPlaysByUserId(userId, limit = 50) {
   return result.rows;
 }
 
-module.exports = { addPlayToHistory, getRecentPlaysByUserId };
+module.exports = { 
+  addPlayToHistory,
+  getRecentPlaysByUserId
+};

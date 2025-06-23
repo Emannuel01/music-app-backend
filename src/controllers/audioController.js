@@ -2,14 +2,16 @@
 
 const audioModel = require('../model/audioModel');
 const favoriteModel = require('../model/favoriteModel');
+const uploadMiddleware = require('../config/multerConfig');
 const fs = require('fs');
 const path = require('path');
 
 async function uploadAudio(req, res) {
-    try {
-        const audiofile = req.files.audiofile ? req.files.audiofile[0] : null;
-        const imagefile = req.files.imagefile ? req.files.imagefile[0] : null;
+    // Inicializa as variáveis de arquivo
+    const audiofile = req.files.audiofile ? req.files.audiofile[0] : null;
+    const imagefile = req.files.imagefile ? req.files.imagefile[0] : null;
 
+    try {
         if (!audiofile) {
             return res.status(400).json({ message: 'Nenhum arquivo de áudio enviado.' });
         }
@@ -17,13 +19,16 @@ async function uploadAudio(req, res) {
         const { music_name, author, year, genre, lyrics, description, group_artists } = req.body;
         
         if (!music_name || !author) {
+            // Se faltar um dado obrigatório, apaga os arquivos que foram subidos para não deixar lixo no servidor
+            if (audiofile) fs.unlinkSync(audiofile.path);
+            if (imagefile) fs.unlinkSync(imagefile.path);
             return res.status(400).json({ message: 'Nome da música e autor são obrigatórios.' });
         }
 
-        // CORREÇÃO: Garantimos que estamos pegando a propriedade 'path', que é a URL completa do Cloudinary.
+        // Monta o objeto com os DADOS CORRETOS para salvar no banco
         const audioData = {
-            filename: audiofile.path,
-            album_art_filename: imagefile ? imagefile.path : null,
+            filename: audiofile.filename, // O nome do arquivo salvo localmente
+            album_art_filename: imagefile ? imagefile.filename : null, // O nome do arquivo da imagem salvo localmente
             music_name,
             author,
             lyrics,
@@ -34,14 +39,16 @@ async function uploadAudio(req, res) {
         };
 
         const newAudio = await audioModel.createAudio(audioData);
-        res.status(201).json({ message: 'Upload bem-sucedido!', data: { id: newAudio.id } });
+        res.status(201).json({ message: 'Upload bem-sucedido!', data: newAudio });
 
     } catch (error) {
         console.error('Erro no upload do controller:', error);
-        res.status(500).json({ message: 'Erro interno ao salvar os dados.' });
+        // Garante que, se a inserção no banco falhar, os arquivos sejam removidos
+        if (audiofile) fs.unlinkSync(audiofile.path);
+        if (imagefile) fs.unlinkSync(imagefile.path);
+        res.status(500).json({ message: 'Erro interno ao salvar os dados da música.' });
     }
 }
-
 
 async function likeAudio(req, res) {
   try {
